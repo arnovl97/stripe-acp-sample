@@ -3,6 +3,14 @@ Complete implementation of the Agentic Commerce Protocol with seller backend and
 
 Thanks to @sandrozc-stripe for providing the code of this repo!
 
+<div style="color: #0066cc; background-color: #e6f2ff; border-left: 4px solid #0066cc; padding: 12px; margin: 16px 0; border-radius: 4px;">
+
+**Important Notes:** 
+
+- because an important part of the ACP protocol (the Shared Payment Token) isn't yet publicly available, we added a `mock_stripe_spt` server to this example.
+- find a getting started guide at `.docs/stripe_getting_started.pdf`
+- find LLM-friendly API docs at `.docs`
+</div>
 
 ## How ACP works
 
@@ -13,11 +21,6 @@ Simplified schematic, please see [https://docs.stripe.com/agentic-commerce/proto
 
 
 ## Architecture of this demo implementation
-
-<div style="color: #0066cc; background-color: #e6f2ff; border-left: 4px solid #0066cc; padding: 12px; margin: 16px 0; border-radius: 4px;">
-
-**Note:** because an important part of the ACP protocol (the Shared Payment Token) isn't yet publicly available, we added a `mock_stripe_spt` server to this example.
-</div>
 
 ```
 Chat Frontend (HTML/JS) → Chat Backend (Python/Flask) → Seller Backend (Node.js/Express)
