@@ -1,0 +1,36 @@
+# Dockerfile for Mock Stripe SPT Server
+# Python Flask application that simulates Stripe's Shared Payment Token API
+
+FROM python:3.13-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    MOCK_STRIPE_SPT_PORT=8001
+
+# Install system dependencies (if needed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY mock_stripe_spt/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY mock_stripe_spt/server.py .
+
+# Expose port (default 8001, configurable via MOCK_STRIPE_SPT_PORT env var)
+EXPOSE ${MOCK_STRIPE_SPT_PORT}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" || exit 1
+
+# Run the application
+CMD ["python", "server.py"]
+
