@@ -5,10 +5,28 @@ Complete implementation of the Agentic Commerce Protocol with seller backend and
 
 ```
 Chat Frontend (HTML/JS) → Chat Backend (Python/Flask) → Seller Backend (Node.js/Express)
-Port: 8000                     Port: 5000                    Port: 3000
+Port: 8000                     Port: 9000                    Port: 3000
+                                    ↓                              ↓
+                          Mock Stripe SPT Server ←──────────────────┘
+                                Port: 8001                          ↓
+                                                              Stripe API
+                                                            (test mode)
 ```
 
+**Flow:**
+1. Chat Backend → Mock SPT Server (stores payment method)
+2. Seller Backend → Mock SPT Server (retrieves payment method)
+3. Seller Backend → Stripe API (processes payment in test mode)
+
+
 ## Quick Start
+
+### 0. Mock Stripe SPT Server (for European demo)
+```bash
+cd mock_stripe_spt
+pip install -r requirements.txt
+python server.py
+```
 
 ### 1. Seller Backend
 ```bash

@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:9000';
 
 // Default buyer and shipping information
 const DEFAULT_BUYER = {
@@ -105,14 +105,14 @@ async function handleShowProducts() {
         state.products = data.products;
 
         addBotMessage("Here are our available products:");
-        
+
         // Create a container for all products to display in one line
         let productsHtml = '<div class="products-container">';
         data.products.forEach(product => {
             productsHtml += createProductCardHtml(product);
         });
         productsHtml += '</div>';
-        
+
         addRawMessage(productsHtml, 'bot');
 
         setTimeout(() => {
@@ -144,7 +144,7 @@ function handleBuyProduct(message) {
 
 function addToCart(product) {
     const existingItem = state.cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
         existingItem.quantity += 1;
         addBotMessage(`Added another ${product.name} to your cart! (Quantity: ${existingItem.quantity})`);
@@ -202,7 +202,7 @@ async function startCheckout() {
     }
 
     addBotMessage("Great! Let's complete your purchase. I'll need some information from you.");
-    
+
     setTimeout(() => {
         requestUserInfo();
     }, 500);
@@ -210,7 +210,7 @@ async function startCheckout() {
 
 function requestUserInfo() {
     addBotMessage("First, let me get your contact information:", [], true);
-    
+
     const formHtml = `
         <div class="form-container">
             <div class="form-group">
@@ -235,7 +235,7 @@ function requestUserInfo() {
             </div>
         </div>
     `;
-    
+
     addRawMessage(formHtml, 'bot');
 }
 
@@ -258,7 +258,7 @@ function submitUserInfo() {
     };
 
     addBotMessage(`✅ Got it, ${firstName}! Now let's get your shipping address.`);
-    
+
     setTimeout(() => {
         requestShippingInfo();
     }, 500);
@@ -301,7 +301,7 @@ function requestShippingInfo() {
             </div>
         </div>
     `;
-    
+
     addRawMessage(formHtml, 'bot');
 }
 
@@ -371,7 +371,7 @@ function showShippingOptionsSelection(checkout) {
     addBotMessage("📦 Please select your preferred shipping method:");
 
     let shippingHtml = '<div class="checkout-info">';
-    
+
     checkout.fulfillment_options.forEach(option => {
         const isSelected = option.id === checkout.fulfillment_option_id;
         shippingHtml += `<div style="margin-bottom: 16px; padding: 16px; background: ${isSelected ? '#f0f4ff' : '#f9f9f9'}; border: 2px solid ${isSelected ? '#667eea' : '#e0e0e0'}; border-radius: 8px; cursor: pointer;" onclick="selectInitialShipping('${option.id}')">`;
@@ -391,7 +391,7 @@ function showShippingOptionsSelection(checkout) {
         shippingHtml += `</div>`;
         shippingHtml += `</div>`;
     });
-    
+
     shippingHtml += '<p style="color: #666; font-size: 13px; margin-top: 12px;">💡 Click on any option to select it</p>';
     shippingHtml += '</div>';
     addRawMessage(shippingHtml, 'bot');
@@ -417,7 +417,7 @@ async function selectInitialShipping(optionId) {
 
         const selectedOption = updatedCheckout.fulfillment_options.find(opt => opt.id === optionId);
         addBotMessage(`✅ Great choice! ${selectedOption.title} selected.`);
-        
+
         setTimeout(() => {
             showOrderReview(updatedCheckout);
         }, 800);
@@ -501,9 +501,9 @@ async function completeOrder() {
 
 function showOrderComplete(checkout) {
     const total = checkout.totals.find(t => t.type === 'total');
-    
+
     addBotMessage(`🎉 Order Complete!`);
-    
+
     const successHtml = `
         <div class="success-message">
             <strong>✅ Payment Successful!</strong><br><br>
@@ -514,7 +514,7 @@ function showOrderComplete(checkout) {
             A confirmation email has been sent to ${state.userInfo.email}
         </div>
     `;
-    
+
     addRawMessage(successHtml, 'bot');
 
     // Reset state
@@ -543,7 +543,7 @@ async function handleCancelCheckout() {
 
     state.currentCheckout = null;
     addBotMessage("❌ Checkout cancelled. Your cart is still saved if you want to try again!");
-    
+
     setTimeout(() => {
         if (state.cart.length > 0) {
             addBotMessage("Type 'cart' to see your items, or 'show products' to keep shopping.");
@@ -573,7 +573,7 @@ function handleGeneralQuery(message) {
         "Looking for something specific? Type 'show products' to browse our catalog!",
         "I can help you find and purchase products. Try 'show products' to get started!",
     ];
-    
+
     addBotMessage(responses[Math.floor(Math.random() * responses.length)]);
 }
 
@@ -589,12 +589,12 @@ function addUserMessage(text) {
 function addBotMessage(text, actions = [], skipContent = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message message-bot';
-    
+
     let html = '';
     if (!skipContent) {
         html += `<div class="message-content">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
     }
-    
+
     if (actions.length > 0) {
         html += '<div class="checkout-actions">';
         actions.forEach(action => {
@@ -602,7 +602,7 @@ function addBotMessage(text, actions = [], skipContent = false) {
         });
         html += '</div>';
     }
-    
+
     messageDiv.innerHTML = html;
     chatMessages.appendChild(messageDiv);
     scrollToBottom();
@@ -617,10 +617,10 @@ function addRawMessage(html, type = 'bot') {
 }
 
 function createProductCardHtml(product) {
-    const imageContent = product.image 
+    const imageContent = product.image
         ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width: 100%; height: 100%; object-fit: cover;">`
         : `<div style="background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 48px;">🏺</div>`;
-    
+
     return `
         <div class="product-card" onclick="openProductModal(${JSON.stringify(product).replace(/"/g, '&quot;')})">
             <div class="product-card-image">
@@ -701,10 +701,10 @@ function modifyItems() {
     }
 
     addBotMessage("Let me show you the current items in your order:");
-    
+
     let itemsHtml = '<div class="checkout-info">';
     itemsHtml += '<strong>Current Items:</strong><br><br>';
-    
+
     state.currentCheckout.line_items.forEach((lineItem, index) => {
         const product = state.products.find(p => p.id === lineItem.item.id);
         if (product) {
@@ -720,7 +720,7 @@ function modifyItems() {
             itemsHtml += `</div></div>`;
         }
     });
-    
+
     itemsHtml += '</div>';
     addRawMessage(itemsHtml, 'bot');
 
@@ -765,7 +765,7 @@ async function updateItemQuantity(itemId, newQuantity) {
         });
 
         addBotMessage(`✅ Updated! New quantity: ${newQuantity}`);
-        
+
         setTimeout(() => {
             showOrderReview(updatedCheckout);
         }, 1000);
@@ -776,18 +776,18 @@ async function updateItemQuantity(itemId, newQuantity) {
 
 function addMoreItems() {
     addBotMessage("Here are all available products:");
-    
+
     // Create a container for all products to display in one line
     let productsHtml = '<div class="products-container">';
-    
+
     state.products.forEach(product => {
         // Check if item is already in checkout
         const existingItem = state.currentCheckout.line_items.find(li => li.item.id === product.id);
-        
-        const imageContent = product.image 
+
+        const imageContent = product.image
             ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width: 100%; height: 100%; object-fit: cover;">`
             : `<div style="background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 48px;">🏺</div>`;
-        
+
         productsHtml += `
             <div class="product-card" onclick="addItemToExistingCheckout('${product.id}')">
                 <div class="product-card-image">
@@ -804,7 +804,7 @@ function addMoreItems() {
             </div>
         `;
     });
-    
+
     productsHtml += '</div>';
     addRawMessage(productsHtml, 'bot');
 
@@ -825,9 +825,9 @@ async function addItemToExistingCheckout(itemId) {
 
     try {
         // Build updated items list
-        const updatedItems = [...state.currentCheckout.line_items.map(li => ({ 
-            id: li.item.id, 
-            quantity: li.item.quantity 
+        const updatedItems = [...state.currentCheckout.line_items.map(li => ({
+            id: li.item.id,
+            quantity: li.item.quantity
         }))];
 
         // Check if item exists, increment or add new
@@ -863,7 +863,7 @@ function modifyShipping() {
     addBotMessage("Choose your preferred shipping method:");
 
     let shippingHtml = '<div class="checkout-info">';
-    
+
     state.currentCheckout.fulfillment_options.forEach(option => {
         const isSelected = option.id === state.currentCheckout.fulfillment_option_id;
         shippingHtml += `<div style="margin-bottom: 16px; padding: 16px; background: ${isSelected ? '#f0f4ff' : '#f9f9f9'}; border: 2px solid ${isSelected ? '#667eea' : '#e0e0e0'}; border-radius: 8px;">`;
@@ -877,7 +877,7 @@ function modifyShipping() {
         }
         shippingHtml += `</div>`;
     });
-    
+
     shippingHtml += '</div>';
     addRawMessage(shippingHtml, 'bot');
 
@@ -908,7 +908,7 @@ async function updateShippingOption(optionId) {
 
         const selectedOption = updatedCheckout.fulfillment_options.find(opt => opt.id === optionId);
         addBotMessage(`✅ Shipping updated to ${selectedOption.title}!`);
-        
+
         setTimeout(() => {
             showOrderReview(updatedCheckout);
         }, 1000);
@@ -964,18 +964,18 @@ window.selectInitialShipping = selectInitialShipping;
 function openProductModal(product) {
     state.currentProduct = product;
     state.modalQuantity = 1;
-    
+
     const modal = document.getElementById('productModal');
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = product.name;
-    
+
     const imageContent = product.image
         ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="product-detail-image" style="width: 100%; height: 300px; object-fit: cover;">`
         : `<div class="product-detail-image" style="background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 80px;">🏺</div>`;
-    
+
     modalBody.innerHTML = `
         ${imageContent}
         <div class="product-detail-content">
@@ -1006,11 +1006,11 @@ function openProductModal(product) {
             </div>
         </div>
     `;
-    
+
     modalFooter.innerHTML = `
         <button class="modal-primary-btn" onclick="startModalCheckout()">Buy Now</button>
     `;
-    
+
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -1027,20 +1027,20 @@ function updateModalQuantity(change) {
     state.modalQuantity = Math.max(1, Math.min(state.currentProduct.stock, state.modalQuantity + change));
     document.getElementById('quantityDisplay').textContent = state.modalQuantity;
     document.getElementById('decreaseBtn').disabled = state.modalQuantity <= 1;
-    
+
     const subtotal = state.currentProduct.price * state.modalQuantity;
     document.getElementById('modalSubtotal').textContent = `$${(subtotal / 100).toFixed(2)}`;
 }
 
 async function startModalCheckout() {
     if (!state.currentProduct) return;
-    
+
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = 'Select Shipping';
-    
+
     modalBody.innerHTML = `
         <div style="padding: 20px;">
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Creating your order...</p>
@@ -1053,28 +1053,28 @@ async function startModalCheckout() {
             </div>
         </div>
     `;
-    
+
     modalFooter.innerHTML = '';
-    
+
     try {
         // Create checkout
         const items = [{ id: state.currentProduct.id, quantity: state.modalQuantity }];
-        
+
         const checkoutData = {
             items,
             buyer: DEFAULT_BUYER,
             fulfillment_address: DEFAULT_SHIPPING_ADDRESS
         };
-        
+
         const response = await fetch(`${API_BASE_URL}/checkout/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(checkoutData)
         });
-        
+
         const checkout = await response.json();
         state.currentCheckout = checkout;
-        
+
         showShippingSelectionModal(checkout);
     } catch (error) {
         modalBody.innerHTML = `
@@ -1093,12 +1093,12 @@ function showShippingSelectionModal(checkout) {
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = 'Select Shipping';
-    
+
     let shippingHtml = '<div style="padding: 20px;">';
     shippingHtml += '<p style="color: #666; font-size: 14px; margin-bottom: 20px;">Choose your preferred shipping method</p>';
-    
+
     checkout.fulfillment_options.forEach(option => {
         const isSelected = option.id === checkout.fulfillment_option_id;
         shippingHtml += `
@@ -1113,10 +1113,10 @@ function showShippingSelectionModal(checkout) {
             </div>
         `;
     });
-    
+
     shippingHtml += '</div>';
     modalBody.innerHTML = shippingHtml;
-    
+
     modalFooter.innerHTML = `
         <button class="modal-primary-btn" onclick="proceedToReview()">Continue to Review</button>
         <button class="modal-secondary-btn" onclick="closeModal()">Cancel</button>
@@ -1128,10 +1128,10 @@ async function selectModalShipping(optionId) {
     document.querySelectorAll('.shipping-option').forEach(opt => {
         opt.classList.remove('selected');
     });
-    
+
     // Add selected class to clicked option
     event.target.closest('.shipping-option').classList.add('selected');
-    
+
     // Update checkout
     try {
         const response = await fetch(`${API_BASE_URL}/checkout/${state.currentCheckout.id}/update`, {
@@ -1139,7 +1139,7 @@ async function selectModalShipping(optionId) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fulfillment_option_id: optionId })
         });
-        
+
         const updatedCheckout = await response.json();
         state.currentCheckout = updatedCheckout;
     } catch (error) {
@@ -1151,16 +1151,16 @@ function proceedToReview() {
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = 'Review Order';
-    
+
     const checkout = state.currentCheckout;
     const subtotal = checkout.totals.find(t => t.type === 'subtotal');
     const shipping = checkout.totals.find(t => t.type === 'fulfillment');
     const tax = checkout.totals.find(t => t.type === 'tax');
     const total = checkout.totals.find(t => t.type === 'total');
     const selectedShipping = checkout.fulfillment_options.find(opt => opt.id === checkout.fulfillment_option_id);
-    
+
     modalBody.innerHTML = `
         <div style="padding: 20px;">
             <div class="checkout-step">
@@ -1229,7 +1229,7 @@ function proceedToReview() {
             </div>
         </div>
     `;
-    
+
     modalFooter.innerHTML = `
         <button class="modal-primary-btn" onclick="completeModalCheckout()">Complete Purchase</button>
         <button class="modal-secondary-btn" onclick="closeModal()">Cancel</button>
@@ -1239,7 +1239,7 @@ function proceedToReview() {
 async function completeModalCheckout() {
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
-    
+
     modalBody.innerHTML = `
         <div style="padding: 40px 20px; text-align: center;">
             <div style="font-size: 48px; margin-bottom: 16px;">💳</div>
@@ -1247,21 +1247,21 @@ async function completeModalCheckout() {
         </div>
     `;
     modalFooter.innerHTML = '';
-    
+
     try {
         const paymentData = {
             payment_token: DEFAULT_PAYMENT_METHOD.payment_method,
             payment_provider: 'stripe'
         };
-        
+
         const response = await fetch(`${API_BASE_URL}/checkout/${state.currentCheckout.id}/complete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(paymentData)
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'completed') {
             showSuccessScreen(result);
         } else {
@@ -1284,11 +1284,11 @@ function showSuccessScreen(checkout) {
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = 'Purchase Complete';
-    
+
     const total = checkout.totals.find(t => t.type === 'total');
-    
+
     modalBody.innerHTML = `
         <div class="success-screen">
             <div class="success-icon">✓</div>
@@ -1311,11 +1311,11 @@ function showSuccessScreen(checkout) {
             </div>
         </div>
     `;
-    
+
     modalFooter.innerHTML = `
         <button class="modal-primary-btn" onclick="closeModal()">Done</button>
     `;
-    
+
     // Reset state
     state.currentCheckout = null;
     state.currentProduct = null;
@@ -1325,17 +1325,17 @@ function showModalQuantityAdjust() {
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     modalTitle.textContent = 'Adjust Quantity';
-    
+
     const checkout = state.currentCheckout;
     const currentItem = checkout.line_items[0];
     const currentQty = currentItem.item.quantity;
-    
+
     const imageContent = state.currentProduct.image
         ? `<img src="${escapeHtml(state.currentProduct.image)}" alt="${escapeHtml(state.currentProduct.name)}" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin: 0 auto 20px; display: block;">`
         : `<div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">🏺</div>`;
-    
+
     modalBody.innerHTML = `
         <div style="padding: 40px 20px; text-align: center;">
             ${imageContent}
@@ -1375,7 +1375,7 @@ function showModalQuantityAdjust() {
             </div>
         </div>
     `;
-    
+
     modalFooter.innerHTML = `
         <button class="modal-primary-btn" onclick="proceedToReview()">Continue to Review</button>
         <button class="modal-secondary-btn" onclick="proceedToReview()">Back</button>
@@ -1384,36 +1384,36 @@ function showModalQuantityAdjust() {
 
 async function updateModalCheckoutQuantity(newQty) {
     if (newQty < 1 || newQty > state.currentProduct.stock) return;
-    
+
     const checkout = state.currentCheckout;
     const currentItem = checkout.line_items[0];
-    
+
     // Update via API
     try {
         const updatedItems = [{
             id: state.currentProduct.id,
             quantity: newQty
         }];
-        
+
         const response = await fetch(`${API_BASE_URL}/checkout/${checkout.id}/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: updatedItems })
         });
-        
+
         const updatedCheckout = await response.json();
         state.currentCheckout = updatedCheckout;
-        
+
         // Update display
         document.getElementById('modalQtyDisplay').textContent = newQty;
         document.getElementById('modalQtySubtotal').textContent = `$${((state.currentProduct.price * newQty) / 100).toFixed(2)}`;
-        
+
         // Update buttons
         const decreaseBtn = document.querySelector('.quantity-btn:first-of-type');
         const increaseBtn = document.querySelector('.quantity-btn:last-of-type');
         if (decreaseBtn) decreaseBtn.disabled = newQty <= 1;
         if (increaseBtn) increaseBtn.disabled = newQty >= state.currentProduct.stock;
-        
+
     } catch (error) {
         console.error('Error updating quantity:', error);
     }

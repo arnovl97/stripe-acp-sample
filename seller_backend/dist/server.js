@@ -257,52 +257,144 @@ app.post('/checkout_sessions/:checkout_session_id/complete', checkoutExists, che
             });
         }
         console.log('Processing payment for amount:', totalAmount);
-        const executePaymentIntentResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Authorization: `Bearer ${process.env.SELLER_API_KEY}`,
-                'Stripe-Version': '2023-08-16;line_items_beta=v1',
-            },
-            body: new URLSearchParams({
-                amount: totalAmount.toString(),
-                currency: 'usd',
-                confirm: 'true',
-                shared_payment_granted_token: payment_data.token,
-                'automatic_payment_methods[enabled]': 'true',
-                'automatic_payment_methods[allow_redirects]': 'never',
-            }).toString(),
-        });
-        const data = await executePaymentIntentResponse.json();
-        console.log('Payment response:', data);
-        // Check if payment failed (no id means error)
-        if (!data.id || data.error) {
-            return res.status(400).json({
-                type: 'invalid_request',
-                code: 'payment_intent_execution_failed',
-                message: data.error?.message || 'Payment intent execution failed',
-            });
+        console.log('Payment token received:', payment_data.token);
+        // ============================================================
+        // DEMO MODE: Mock Stripe SPT Server (for European demo)
+        // ============================================================
+        if (payment_data.token.startsWith('spt_')) {
+            console.log('🎭 DEMO MODE: Retrieving payment details from mock SPT server');
+            try {
+                // Step 1: Retrieve payment method from mock SPT server
+                const mockSptUrl = process.env.MOCK_STRIPE_SPT_URL || 'http://localhost:8001';
+                const sptResponse = await fetch(`${mockSptUrl}/v1/shared_payment/granted_tokens/${payment_data.token}`);
+                const sptData = await sptResponse.json();
+                console.log('Retrieved SPT data:', sptData);
+                if (!sptResponse.ok) {
+                    return res.status(400).json({
+                        type: 'invalid_request',
+                        code: 'spt_retrieval_failed',
+                        message: sptData.error?.message || 'Failed to retrieve payment token',
+                    });
+                }
+                // Step 2: Create Stripe Payment Intent with the retrieved payment method
+                console.log('💳 Creating Stripe Payment Intent with payment method:', sptData.payment_method);
+                const stripeResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: `Bearer ${process.env.SELLER_API_KEY}`,
+                    },
+                    body: new URLSearchParams({
+                        amount: totalAmount.toString(),
+                        currency: 'usd',
+                        payment_method: sptData.payment_method,
+                        'payment_method_types[]': 'card',
+                        confirm: 'true',
+                    }).toString(),
+                });
+                const paymentIntent = await stripeResponse.json();
+                console.log('Stripe Payment Intent response:', paymentIntent);
+                // Check if payment failed
+                if (!paymentIntent.id || paymentIntent.error) {
+                    return res.status(400).json({
+                        type: 'invalid_request',
+                        code: 'payment_intent_execution_failed',
+                        message: paymentIntent.error?.message || 'Payment intent execution failed',
+                    });
+                }
+                // Payment processed successfully
+                console.log('✅ Payment successful! Payment Intent ID:', paymentIntent.id);
+                checkout.status = datastructures_1.CheckoutStatus.COMPLETED;
+                checkout.messages.push({
+                    type: datastructures_1.MessageType.INFO,
+                    content_type: 'plain',
+                    content: 'Payment processed successfully. Order confirmed!',
+                });
+                // Remove payment provider from completed checkout
+                delete checkout.payment_provider;
+                checkouts[checkout_session_id] = checkout;
+                // Return CheckoutSessionWithOrder (includes order details)
+                const response = {
+                    ...checkout,
+                    order: {
+                        id: (0, datastructures_1.generateId)('order'),
+                        checkout_session_id: checkout_session_id,
+                        permalink_url: `https://example.com/orders/${(0, datastructures_1.generateId)('order')}`,
+                    },
+                };
+                return res.json(response);
+            }
+            catch (error) {
+                console.error('Error retrieving SPT from mock server:', error);
+                return res.status(500).json({
+                    type: 'processing_error',
+                    code: 'spt_retrieval_error',
+                    message: 'Failed to retrieve payment token from mock server',
+                });
+            }
         }
-        // Payment processed successfully
-        checkout.status = datastructures_1.CheckoutStatus.COMPLETED;
-        checkout.messages.push({
-            type: datastructures_1.MessageType.INFO,
-            content_type: 'plain',
-            content: 'Payment processed successfully. Order confirmed!',
-        });
-        // Remove payment provider from completed checkout
-        delete checkout.payment_provider;
-        checkouts[checkout_session_id] = checkout;
-        // Return CheckoutSessionWithOrder (includes order details)
-        const response = {
-            ...checkout,
-            order: {
-                id: (0, datastructures_1.generateId)('order'),
-                checkout_session_id: checkout_session_id,
-                permalink_url: `https://example.com/orders/${(0, datastructures_1.generateId)('order')}`,
-            },
-        };
-        res.json(response);
+        // ============================================================
+        // PRODUCTION MODE: Real Stripe API (commented out)
+        // ============================================================
+        // Uncomment below and comment out DEMO MODE block above for production
+        //
+        // console.log('💳 PRODUCTION MODE: Processing with real Stripe API');
+        // const executePaymentIntentResponse = await fetch(
+        //   'https://api.stripe.com/v1/payment_intents',
+        //   {
+        //     method: 'POST',
+        //     headers: {
+        //       'Content-Type': 'application/x-www-form-urlencoded',
+        //       Authorization: `Bearer ${process.env.SELLER_API_KEY}`,
+        //       'Stripe-Version': '2023-08-16;line_items_beta=v1',
+        //     },
+        //     body: new URLSearchParams({
+        //       amount: totalAmount.toString(),
+        //       currency: 'usd',
+        //       confirm: 'true',
+        //       shared_payment_granted_token: payment_data.token,
+        //       'automatic_payment_methods[enabled]': 'true',
+        //       'automatic_payment_methods[allow_redirects]': 'never',
+        //     }).toString(),
+        //   }
+        // );
+        //
+        // const data: any = await executePaymentIntentResponse.json();
+        // console.log('Payment response:', data);
+        //
+        // // Check if payment failed (no id means error)
+        // if (!data.id || data.error) {
+        //   return res.status(400).json({
+        //     type: 'invalid_request',
+        //     code: 'payment_intent_execution_failed',
+        //     message: data.error?.message || 'Payment intent execution failed',
+        //   } as ErrorResponse);
+        // }
+        //
+        // // Payment processed successfully
+        // checkout.status = CheckoutStatus.COMPLETED;
+        // checkout.messages.push({
+        //   type: MessageType.INFO,
+        //   content_type: 'plain',
+        //   content: 'Payment processed successfully. Order confirmed!',
+        // });
+        //
+        // // Remove payment provider from completed checkout
+        // delete checkout.payment_provider;
+        //
+        // checkouts[checkout_session_id] = checkout;
+        //
+        // // Return CheckoutSessionWithOrder (includes order details)
+        // const response = {
+        //   ...checkout,
+        //   order: {
+        //     id: generateId('order'),
+        //     checkout_session_id: checkout_session_id,
+        //     permalink_url: `https://example.com/orders/${generateId('order')}`,
+        //   },
+        // };
+        //
+        // res.json(response);
     }
     catch (error) {
         console.error('Error completing checkout:', error);

@@ -134,8 +134,15 @@ class ACPClient:
         tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
         expires_at_timestamp = int(tomorrow.timestamp()) 
         
+        # ============================================================
+        # DEMO MODE: Mock Stripe SPT Server (for European demo)
+        # ============================================================
+        from config import SELLER_BACKEND_URL
+        mock_spt_url = os.getenv('MOCK_STRIPE_SPT_URL', 'http://localhost:8001')
+        print(f"🎭 DEMO MODE: Using mock Stripe SPT server: {mock_spt_url}/v1/shared_payment/issued_tokens")
+        
         get_pst_token_response = requests.post(
-            url= "https://api.stripe.com/v1/shared_payment/issued_tokens", 
+            url=f"{mock_spt_url}/v1/shared_payment/issued_tokens", 
             data={
                 "payment_method": payment_token,
                 "usage_limits[currency]": "usd",
@@ -143,9 +150,29 @@ class ACPClient:
                 "usage_limits[expires_at]": expires_at_timestamp,
                 "seller_details[network_id]": "internal",
                 "seller_details[external_id]": "stripe_test_merchant",
-            },
-            auth=(os.getenv("FACILITATOR_API_KEY"), "")
+            }
         )
+        
+        # ============================================================
+        # PRODUCTION MODE: Real Stripe API (commented out)
+        # ============================================================
+        # Uncomment below and comment out DEMO MODE block above for production
+        #
+        # stripe_api_url = "https://api.stripe.com/v1/shared_payment/issued_tokens"
+        # print(f"💳 PRODUCTION MODE: Using real Stripe API: {stripe_api_url}")
+        # 
+        # get_pst_token_response = requests.post(
+        #     url=stripe_api_url, 
+        #     data={
+        #         "payment_method": payment_token,
+        #         "usage_limits[currency]": "usd",
+        #         "usage_limits[max_amount]": amount,
+        #         "usage_limits[expires_at]": expires_at_timestamp,
+        #         "seller_details[network_id]": "internal",
+        #         "seller_details[external_id]": "stripe_test_merchant",
+        #     },
+        #     auth=(os.getenv("FACILITATOR_API_KEY"), "")
+        # )
         
         print(get_pst_token_response.json())
         spt_token_id = get_pst_token_response.json()['id']
