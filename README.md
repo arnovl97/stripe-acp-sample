@@ -37,6 +37,38 @@ Port: 8000                     Port: 9000                    Port: 3000
 2. Seller Backend → Mock SPT Server (retrieves payment method)
 3. Seller Backend → Stripe API (processes payment in test mode)
 
+## Project Structure
+
+```
+acp-demo-hackathon-master/
+├── chat_frontend/
+│   ├── index.html          # HTML frontend interface
+│   ├── app.js              # Vanilla JavaScript chat interface
+│   ├── styles.css          # CSS styles
+│   ├── modal-styles.css    # Modal component styles
+│   └── README.md
+├── chat_backend/
+│   ├── server.py           # Flask backend server
+│   ├── acp_client.py       # ACP protocol client implementation
+│   ├── llm_service.py      # LLM integration service
+│   ├── requirements.txt    # Python dependencies
+│   └── README.md
+├── seller_backend/
+│   ├── server.ts           # Express backend server (TypeScript)
+│   ├── datastructures.ts   # Data structure definitions
+│   ├── openapi.agentic_checkout.yaml  # OpenAPI specification
+│   ├── package.json        # Node.js dependencies
+│   ├── tsconfig.json       # TypeScript configuration
+│   ├── types/
+│   │   └── openapi.d.ts    # TypeScript type definitions
+│   └── README.md
+├── mock_stripe_spt/
+│   ├── server.py           # Mock Stripe SPT server
+│   ├── requirements.txt    # Python dependencies
+│   └── README.md
+├── start-all.sh            # Script to start all services
+└── README.md
+```
 
 ## Environment Variables
 
