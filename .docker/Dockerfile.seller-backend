@@ -16,6 +16,7 @@ RUN npm ci
 COPY seller_backend/tsconfig.json .
 COPY seller_backend/server.ts .
 COPY seller_backend/datastructures.ts .
+COPY seller_backend/views.ts .
 COPY seller_backend/openapi.agentic_checkout.yaml .
 COPY seller_backend/openapi.products.yaml .
 COPY seller_backend/types ./types
