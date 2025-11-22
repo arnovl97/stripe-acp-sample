@@ -118,6 +118,13 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+// Simple request logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  next();
+});
+
 // OpenAPI Validator Middleware
 // Use path that works in both dev (ts-node) and production (compiled to dist/)
 const apiSpecPath = __dirname.includes('/dist')
