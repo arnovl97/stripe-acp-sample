@@ -17,8 +17,6 @@ dotenv.config();
 
 import express, { Request, Response, NextFunction } from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
-import swaggerUi from 'swagger-ui-express';
-import YAML from 'yamljs';
 import path from 'path';
 import { components } from './types/openapi';
 import {
@@ -33,6 +31,7 @@ import {
   createPaymentProvider,
   generateId,
 } from './datastructures';
+import { getIndexPageHtml } from './views';
 
 // ============================================================================
 // CONSTANTS
@@ -131,44 +130,13 @@ const apiSpecPath = __dirname.includes('/dist')
   ? path.join(__dirname, '..', 'openapi.agentic_checkout.yaml')
   : path.join(__dirname, 'openapi.agentic_checkout.yaml');
 
-const productsSpecPath = __dirname.includes('/dist')
-  ? path.join(__dirname, '..', 'openapi.products.yaml')
-  : path.join(__dirname, 'openapi.products.yaml');
-
-// Load OpenAPI specs for Swagger UI
-const mainSpec = YAML.load(apiSpecPath);
-const productsSpec = YAML.load(productsSpecPath);
-
-// Merge specs: combine paths and components
-const mergedSpec = {
-  ...mainSpec,
-  paths: {
-    ...mainSpec.paths,
-    ...productsSpec.paths,
-  },
-  components: {
-    ...(mainSpec.components || {}),
-    ...(productsSpec.components || {}),
-    schemas: {
-      ...(mainSpec.components?.schemas || {}),
-      ...(productsSpec.components?.schemas || {}),
-    },
-  },
-};
-
-// Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(mergedSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'ACP Seller Backend API Documentation'
-}));
-
 app.use(
   OpenApiValidator.middleware({
     apiSpec: apiSpecPath,
     validateRequests: true,
     validateResponses: false,
     validateSecurity: false,
-    ignorePaths: /\/products|\/api-docs|\//,
+    ignorePaths: /\/products|\//,
   })
 );
 
@@ -181,10 +149,10 @@ const checkouts: CheckoutStore = {};
 
 /**
  * GET /
- * Root endpoint - redirects to API documentation
+ * Root endpoint - shows available endpoints
  */
 app.get('/', (_req: Request, res: Response) => {
-  res.redirect('/api-docs');
+  res.send(getIndexPageHtml());
 });
 
 /**
