@@ -9,10 +9,11 @@ import requests
 from typing import Optional, Dict, List, Any
 from datetime import datetime, timedelta
 import os
+import stripe
 from dotenv import load_dotenv
 
-load_dotenv()
 
+load_dotenv()
 
 # ============================================================================
 # CONSTANTS
@@ -86,6 +87,9 @@ class ACPClient:
             base_url: Base URL of the seller backend (defaults to config value)
         """
         self.base_url = base_url.rstrip('/')
+        self.stripe = stripe
+        self.stripe.api_key = os.environ["FACILITATOR_API_KEY"]
+
     
     def _build_headers(self) -> Dict[str, str]:
         """
@@ -160,7 +164,7 @@ class ACPClient:
         Returns:
             Dictionary containing products list
         """
-        return self._make_request('GET', '/products')
+        return self.stripe.Product.list(limit=3)
     
     def create_checkout(
         self,
